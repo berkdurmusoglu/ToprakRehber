@@ -23,4 +23,9 @@ public class RehberController {
         return rehberService.getRehberByProduct(productId);
     }
 
+    @GetMapping("/ilce/{ilceId}")
+    public List<RehberGetResponse> RehberGetByIlce(@PathVariable int ilceId) {
+        return rehberService.getRehberByIlce(ilceId);
+    }
+
 }

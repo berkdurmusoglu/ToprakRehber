@@ -24,6 +24,24 @@ class RehberService {
     }
   }
 
+  Future<List<Rehber>> fetchRehberByIlce(int ilceID) async {
+    final response = await http.get(
+        Uri.parse('$baseUrl/ilce/$ilceID'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8'
+        });
+
+    if (response.statusCode == 200) {
+      List<Rehber> rehbers =
+      (json.decode(utf8.decode(response.bodyBytes)) as List)
+          .map((data) => Rehber.fromJson(data))
+          .toList();
+      return rehbers;
+    } else {
+      throw Exception('Failed to load Products');
+    }
+  }
+
   Future<List<Rehber>> fetchRehberByProduct(int productId) async {
     final response = await http.get(
         Uri.parse('$baseUrl/product/$productId'),

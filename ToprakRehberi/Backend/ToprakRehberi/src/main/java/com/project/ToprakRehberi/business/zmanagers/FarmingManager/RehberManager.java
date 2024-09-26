@@ -21,6 +21,14 @@ public class RehberManager implements RehberService {
     private RehberRepository rehberRepository;
     private ModelMapperService modelMapperService;
     private ProductRepository productRepository;
+
+    @Override
+    public List<RehberGetResponse> getRehberByIlce(int ilceID) {
+        List<Rehber> rehberler = rehberRepository.filterIlce(ilceID);
+        List<RehberGetResponse> rehberByMahalle = rehberler.stream().map(rehber -> this.modelMapperService.forResponse().map(rehber, RehberGetResponse.class)).toList();
+        return rehberByMahalle;
+    }
+
     @Override
     public List<RehberGetResponse> getRehberByMahalle(int mahalleId) {
         List<Rehber> rehberler = rehberRepository.findByMahalleIdOrderBySonucDesc(mahalleId);

@@ -221,6 +221,7 @@ class SelectedLandInfo extends StatelessWidget {
   }
 }
 
+
 class withProductList extends StatefulWidget {
   final int userID;
   final Land? land;
@@ -239,6 +240,8 @@ class _withProductListState extends State<withProductList> {
   final LandServices landService = LandServices();
   late int landID;
   final _formKey = GlobalKey<FormState>();
+
+  final DateTime today = DateTime.now(); // Bugünün tarihi
 
   @override
   Widget build(BuildContext context) {
@@ -287,16 +290,16 @@ class _withProductListState extends State<withProductList> {
                   },
                 ),
                 SizedBox(height: 20),
-                // Tarih Seçici
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(selectedDate == null
                         ? 'Tarih Seçilmedi'
-                        : 'Seçilen Tarih: ${DateFormat('dd/MM/yyyy').format(selectedDate!)}'), // Tarih formatı sadece gün/ay/yıl olacak
+                        : 'Seçilen Tarih: ${DateFormat('dd/MM/yyyy').format(
+                        selectedDate!)}'),
                     Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blue, width: 2.0), // Daha belirgin kenar
+                        border: Border.all(color: Colors.blue, width: 2.0),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextButton(
@@ -305,7 +308,8 @@ class _withProductListState extends State<withProductList> {
                             context: context,
                             initialDate: DateTime.now(),
                             firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
+                            lastDate: DateTime
+                                .now(), // Gelecek tarihler seçilemez
                           );
                           if (pickedDate != null) {
                             setState(() {
@@ -314,8 +318,8 @@ class _withProductListState extends State<withProductList> {
                           }
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0, vertical: 4.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0,
+                              vertical: 4.0),
                           child: Text('Tarih Seç'),
                         ),
                       ),
@@ -346,6 +350,11 @@ class _withProductListState extends State<withProductList> {
                           if (selectedProduct != null &&
                               ekimM2Controller.text.isNotEmpty &&
                               selectedDate != null) {
+                            if (selectedDate!.isAfter(today)) {
+                              // Seçilen tarih bugünden büyükse hata mesajı
+                              print('Seçilen tarih bugünden sonra olamaz');
+                              return;
+                            }
                             try {
                               await ekimService.createEkim(
                                   widget.land?.id ?? landID,
@@ -384,7 +393,7 @@ class _withProductListState extends State<withProductList> {
   }
 }
 
-class withMevsimList extends StatefulWidget {
+  class withMevsimList extends StatefulWidget {
   final int userID;
   final Land? land;
 

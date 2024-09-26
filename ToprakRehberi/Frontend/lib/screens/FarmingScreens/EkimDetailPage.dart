@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:toprak_rehberi/models/Farming/Ekim.dart';
 
 import 'package:toprak_rehberi/screens/NavigationPage.dart';
@@ -20,7 +21,8 @@ class EkimDetailPage extends StatefulWidget {
 class _EkimDetailPageState extends State<EkimDetailPage> {
   late Future<Ekim> futureEkim;
   EkimService ekimService = EkimService();
-  bool showHarvestFields = false; // Hasat textfieldlarını gösterip gizlemek için
+  bool showHarvestFields =
+      false; // Hasat textfieldlarını gösterip gizlemek için
   TextEditingController hasatMiktariController = TextEditingController();
   DateTime? selectedDate;
   String? selectedHasatSonuc;
@@ -65,11 +67,15 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
             final localMevsim = getSeason(DateTime.now());
             final hasatMevsimi = ekim.product.hasatMevsimi;
             final hasatZamani = localMevsim == hasatMevsimi;
-            DateFormat trDate = DateFormat.yMMMMd('tr_TR'); // "12 Eylül 2024" formatı
+            final totalDuration = ekim.ekimDay;
+            final progressPercent =
+                (difference / totalDuration).clamp(0.0, 1.0);
+            DateFormat trDate =
+                DateFormat.yMMMMd('tr_TR'); // "12 Eylül 2024" formatı
             String newDate = trDate.format(ekim.ekimTarihi);
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8,15,8,15),
+                padding: const EdgeInsets.fromLTRB(8, 15, 8, 15),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -91,7 +97,6 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-
                           Text("Ürün Adı: ${ekim.product.productName}",
                               style: GoogleFonts.audiowide(fontSize: 33)),
                           SizedBox(height: 8),
@@ -101,57 +106,98 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
                           Text("Arazi Açıklaması: ${ekim.land.landDescription}",
                               style: TextStyle(fontSize: 18)),
                           Text(
-                              "Arazi Adresi: ${ekim.land.mahalle
-                                  .mahalleName} / ${ekim.land.mahalle.ilceId
-                                  .ilceName}",
+                              "Arazi Adresi: ${ekim.land.mahalle.mahalleName} / ${ekim.land.mahalle.ilceId.ilceName}",
                               style: TextStyle(fontSize: 18)),
                           Text("İl: ${ekim.land.mahalle.ilceId.ilId}",
                               style: TextStyle(fontSize: 18)),
                           Text("Ekim Süresi: $difference",
                               style: TextStyle(fontSize: 18)),
                           SizedBox(height: 8),
-                          Text("Tahmini Hasat Mevsimi: ${ekim.product
-                              .hasatMevsimi}",
+                          Text(
+                              "Tahmini Hasat Mevsimi: ${ekim.product.hasatMevsimi}",
                               style: TextStyle(fontSize: 18)),
                           SizedBox(height: 8),
-                          hasatZamani
-                              ? Text(
-                            "Tahmini hasat mevsimindesiniz!",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                              : Text(
-                            "Tahmini Hasat mevsimine henüz gelmediniz!",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-
+                          Text("Tahmini Ekim Süresi: ${ekim.ekimDay}",
+                              style: TextStyle(fontSize: 18)),
+                          SizedBox(height: 8),
                         ],
                       ),
                     ),
 
                     SizedBox(height: 20),
+                    if (difference < ekim.ekimDay - 7)
+                      Text(
+                        "Hasat için henüz ekim süresi dolmadı!",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
 
+                    SizedBox(height: 16),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/evolutionbg.png',
+                          // Gelişim aşamasını gösteren resim (boyutları büyütüldü)
+                          width: 100, // Genişliği artırdık
+                          height: 100, // Yüksekliği artırdık
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            LinearPercentIndicator(
+                              width: MediaQuery.of(context).size.width * 0.6,
+                              // Ortaya sıkışması için genişliği ayarlıyoruz
+                              lineHeight: 50.0,
+                              animation: true,
+                              animationDuration: 2000,
+                              percent: progressPercent,
+                              center: Text(
+                                "${(progressPercent * 100).toStringAsFixed(1)}%",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              leading: Image.asset(
+                                'assets/images/plantbg.png',
+                                // Ekim başlangıcını temsil eden resim (boyutları büyütüldü)
+                                width: 80, // Genişliği artırdık
+                                height: 70, // Yüksekliği artırdık
+                              ),
+                              trailing: Image.asset(
+                                'assets/images/harvestbg.png',
+                                // Hasat aşamasını temsil eden resim (boyutları büyütüldü)
+                                width: 70, // Genişliği artırdık
+                                height: 70, // Yüksekliği artırdık
+                              ),
+                              progressColor: Colors.green,
+                              backgroundColor: Colors.grey.shade300,
+                              barRadius: Radius.circular(16),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
                     // Hasat Et butonu
                     ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          showHarvestFields =
-                          !showHarvestFields; // Butona basıldığında textfieldlar görünsün
-                        });
-                      },
+                      onPressed: difference >=
+                              ekim.ekimDay -
+                                  7 // Enable button if within 7 days of estimated harvest time
+                          ? () {
+                              setState(() {
+                                showHarvestFields = !showHarvestFields;
+                              });
+                            }
+                          : null, // Disable button if too early
                       child: Text(showHarvestFields
                           ? 'Hasat Alanını Gizle'
                           : 'Hasat Et'),
                     ),
-
                     // TextFieldlar, başlangıçta gizli
                     Visibility(
                       visible: showHarvestFields,
@@ -167,19 +213,20 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
                                   labelText: 'Hasat Miktarı (kg)',
                                   border: OutlineInputBorder(),
                                 ),
-                                keyboardType: TextInputType.number, // Yalnızca sayısal giriş kabul ediliyor
+                                keyboardType: TextInputType.number,
+                                // Yalnızca sayısal giriş kabul ediliyor
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return 'Lütfen hasat miktarını giriniz';
                                   }
 
-                                  final double? hasatMiktari = double.tryParse(value);
+                                  final double? hasatMiktari =
+                                      double.tryParse(value);
                                   if (hasatMiktari == null) {
                                     return 'Geçerli bir miktar giriniz';
                                   }
 
-
-                                  if (ekim.land.m2  == 0) {
+                                  if (ekim.land.m2 == 0) {
                                     return 'Geçersiz arazi büyüklüğü bilgisi';
                                   }
 
@@ -193,14 +240,16 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
                               SizedBox(height: 16),
 
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(selectedDate == null
                                       ? 'Tarih Seçilmedi'
                                       : 'Seçilen Tarih: ${selectedDate!.toLocal()}'),
                                   TextButton(
                                     onPressed: () async {
-                                      DateTime? pickedDate = await showDatePicker(
+                                      DateTime? pickedDate =
+                                          await showDatePicker(
                                         context: context,
                                         initialDate: DateTime.now(),
                                         firstDate: DateTime(2000),
@@ -259,19 +308,26 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
                                       selectedDate!.toIso8601String(),
                                     );
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Hasat başarıyla tamamlandı')),
+                                      SnackBar(
+                                          content: Text(
+                                              'Hasat başarıyla tamamlandı')),
                                     );
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => NavigationPage(userId: 2, initialIndex: 1),
+                                        builder: (context) => NavigationPage(
+                                            userId: 2, initialIndex: 1),
                                       ),
                                     );
                                   } else {
                                     // Eğer tarih ya da hasat sonucu seçilmediyse, ek bir kontrol
-                                    if (selectedDate == null || selectedHasatSonuc == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Lütfen tüm alanları doldurun')),
+                                    if (selectedDate == null ||
+                                        selectedHasatSonuc == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                'Lütfen tüm alanları doldurun')),
                                       );
                                     }
                                   }
@@ -279,10 +335,11 @@ class _EkimDetailPageState extends State<EkimDetailPage> {
                                 child: Text("Hasatı Tamamla"),
                               ),
                             ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ) ],
+                    )
+                  ],
                 ),
               ),
             );

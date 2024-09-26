@@ -14,12 +14,11 @@ import '../../models/Adres/Mahalle.dart';
 import '../../models/Farming/Rehber.dart';
 import '../../models/Other/Product.dart' as prd;
 
-
 class RehberScreen extends StatefulWidget {
   final int userID;
 
   const RehberScreen({required this.userID, super.key});
-    @override
+  @override
   _RehberScreenState createState() => _RehberScreenState();
 }
 
@@ -30,8 +29,8 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
   Il? selectedIl;
   Ilce? selectedIlce;
   Mahalle? selectedMahalle;
-  prd.Product? selectedProduct;  // Ürün seçimi
-  late TabController _tabController; // Tab controller
+  prd.Product? selectedProduct;
+  late TabController _tabController;
 
   @override
   void initState() {
@@ -45,16 +44,34 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
   }
 
   void _loadUserData() {
-
-    // Eğer mahalle seçiliyse mahalleye göre listeleme yap
     if (_tabController.index == 0) {
       futureRehber = rehberService.fetchRehberByMahalle(selectedMahalle!.id);
     } else if (selectedProduct != null) {
-      // Eğer ürün seçiliyse ürüne göre listeleme yap
       futureRehber = rehberService.fetchRehberByProduct(selectedProduct!.id);
     }
   }
 
+  void _loadRehberByIlce(int ilceID) {
+    setState(() {
+      futureRehber = rehberService.fetchRehberByIlce(ilceID);
+    });
+  }
+
+  void _loadRehberByMahalle(int mahalleID) {
+    setState(() {
+      futureRehber = rehberService.fetchRehberByMahalle(mahalleID);
+    });
+  }
+
+  Map<double, Color> _assignColorsByResult(List<Rehber> rehberList) {
+    Map<double, Color> colorMap = {};
+    List<double> uniqueResults = rehberList.map((r) => r.sonuc).toSet().toList()..sort();
+    for (int i = 0; i < uniqueResults.length; i++) {
+      double result = uniqueResults[i];
+      colorMap[result] = Color.lerp(Colors.red, Colors.green, i / uniqueResults.length)!;
+    }
+    return colorMap;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,26 +81,26 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
         leading: IconButton(onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => NavigationPage(userId: widget.userID, initialIndex: 0,)), // Yönlendirmek istediğiniz sayfa
+            MaterialPageRoute(builder: (context) => NavigationPage(userId: widget.userID, initialIndex: 0,)),
           );
         }, icon: Icon(Icons.arrow_back_sharp)),
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: Text('TOPRAK REHBERİ',style: GoogleFonts.oswald(color: Color(0xffE0E0D8),fontSize: 30),),
+        title: Text('TOPRAK REHBERİ', style: GoogleFonts.oswald(color: Color(0xffE0E0D8), fontSize: 30),),
         backgroundColor: Color(0xff1a474f),
         iconTheme: IconThemeData(
-          color: Color(0xffE0E0D8), // Geri dönüş butonunun rengi
+          color: Color(0xffE0E0D8),
         ),
         bottom: TabBar(
           controller: _tabController,
           onTap: (index) {
             setState(() {
-              _loadUserData(); // Tab değiştiğinde verileri yeniden yükle
+              _loadUserData();
             });
           },
-          indicatorColor: Colors.orange[200], // Seçili olan butonun altındaki çizginin rengi
-          labelColor: Colors.orange[200], // Seçili olan butonun rengi
-          unselectedLabelColor: Color(0xffE0E0D8), // Seçili olmayan butonların rengi
+          indicatorColor: Colors.orange[200],
+          labelColor: Colors.orange[200],
+          unselectedLabelColor: Color(0xffE0E0D8),
           tabs: [
             Tab(text: 'Mahalleye Göre'),
             Tab(text: 'Ürüne Göre'),
@@ -92,7 +109,6 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
       ),
       body: Column(
         children: [
-          // Bu bölüm Dropdown menülerini içeriyor
           Column(
             children: [
               if (_tabController.index == 0) ...[
@@ -100,7 +116,7 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
                   onChanged: (Il? il) {
                     setState(() {
                       selectedIl = il;
-                      selectedIlce = null; // İl değiştiğinde ilçe ve mahalle sıfırlanır.
+                      selectedIlce = null;
                       selectedMahalle = null;
                     });
                   },
@@ -110,7 +126,8 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
                   onChanged: (Ilce? ilce) {
                     setState(() {
                       selectedIlce = ilce;
-                      selectedMahalle = null; // İlçe değiştiğinde mahalle sıfırlanır.
+                      selectedMahalle = null;
+                      _loadRehberByIlce(ilce!.id);
                     });
                   },
                   selectedIlce: selectedIlce,
@@ -120,7 +137,7 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
                   onChanged: (Mahalle? mahalle) {
                     setState(() {
                       selectedMahalle = mahalle;
-                      _loadUserData();
+                      _loadRehberByMahalle(mahalle!.id);
                     });
                   },
                   selectedMahalle: selectedMahalle,
@@ -148,22 +165,18 @@ class _RehberScreenState extends State<RehberScreen> with SingleTickerProviderSt
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Bir hata oluştu: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('Geçmiş ekim bulunamadı.'));
+                  return Center(child: Text('Rehber bulunamadı.'));
                 } else {
                   List<Rehber> rehberList = snapshot.data!;
+                  Map<double, Color> colorMap = _assignColorsByResult(rehberList);
                   return ListView.builder(
                     itemCount: rehberList.length,
                     itemBuilder: (context, index) {
                       Rehber rehber = rehberList[index];
-                      Color backgroundColor = Color.lerp(
-                        Colors.green,
-                        Colors.red,
-                        index / rehberList.length,
-                      )!;
+                      Color backgroundColor = colorMap[rehber.sonuc]!;
 
                       return InkWell(
                         onTap: () {
-                          // Yeni sayfaya yönlendirme
                           Navigator.push(
                             context,
                             MaterialPageRoute(

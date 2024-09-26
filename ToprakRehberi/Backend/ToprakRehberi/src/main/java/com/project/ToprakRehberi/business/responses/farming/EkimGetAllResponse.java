@@ -13,4 +13,5 @@ public class EkimGetAllResponse {
     private int land_Id;
     private String product_Id;
     private LocalDate ekimTarihi;
+    private int ekimDay;
 }

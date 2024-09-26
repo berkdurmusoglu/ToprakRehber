@@ -8,7 +8,7 @@ import java.util.List;
 public interface RehberService {
 
 
-
+    List<RehberGetResponse> getRehberByIlce(int ilceID);
 
     List<RehberGetResponse> getRehberByMahalle(int mahalleId);
 
